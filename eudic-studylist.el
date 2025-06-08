@@ -6,13 +6,9 @@
 
 (require 'eudic-client)
 
-(cl-defstruct eudic-studylist
-  id
-  language
-  name
-  add_time)
+(cl-defstruct eudic-studylist id language name add_time)
 
-(defun create-studylist (alist)
+(defun eudic/create--studylist (alist)
   "Create a new Eudic study list from ARGS."
   (make-eudic-studylist
    :id (alist-get 'id alist)
@@ -21,11 +17,11 @@
    :add_time (alist-get 'add_time alist))
   )
 
-(defun list-studylists ()
+(defun eudic/list--studylists ()
   (let* (
-         (response (do-request :url "/v1/studylist/category" :params '(("language" "en"))))
+         (response (eudic/do--request :url "/v1/studylist/category" :params '(("language" "en"))))
          (studylists (alist-get 'data response))
          )
-    (mapcar 'create-studylist studylists)))
+    (mapcar 'eudic/create--studylist studylists)))
 
 (provide 'eudic-studylist)
