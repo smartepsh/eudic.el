@@ -14,7 +14,7 @@
 from htthttps://api.frdic.com/api/open/v1/studylist/categoryps://my.eudic.net/OpenAPI/Authorization")
 (setq eudic-api-key (getenv "EUDIC_API_KEY"))
 
-(cl-defun do-request (&key (method 'get) url params body)
+(cl-defun eudic/do--request (&key (method 'get) url params body)
   (let* (
          (query-string (if params (url-build-query-string params)))
          (complete-url (concat eudic-api-host url (if query-string (concat "?" query-string) "")))
