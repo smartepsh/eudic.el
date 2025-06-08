@@ -20,6 +20,7 @@ from htthttps://api.frdic.com/api/open/v1/studylist/categoryps://my.eudic.net/Op
          (complete-url (concat eudic-api-host url (if query-string (concat "?" query-string) "")))
          )
     (plz method complete-url
+      :body (if body (json-encode body))
       :headers `(("authorization" . ,eudic-api-key) ("content-type" . "application/json; charset=utf-8"))
       :as 'json-read)))
 
