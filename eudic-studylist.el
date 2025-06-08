@@ -12,7 +12,7 @@
   name
   add_time)
 
-(defun make-studylist (alist)
+(defun create-studylist (alist)
   "Create a new Eudic study list from ARGS."
   (make-eudic-studylist
    :id (alist-get 'id alist)
@@ -26,6 +26,6 @@
          (response (do-request :url "/v1/studylist/category" :params '(("language" "en"))))
          (studylists (alist-get 'data response))
          )
-    (mapcar 'make-studylist studylists)))
+    (mapcar 'create-studylist studylists)))
 
 (provide 'eudic-studylist)
