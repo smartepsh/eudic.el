@@ -7,6 +7,8 @@
 (require 'eudic-client)
 (require 'eudic-utils)
 
+(defvar eudic-studylists
+  "All Eudic studylists.")
 
 (cl-defstruct eudic-studylist id language name add_time)
 
@@ -14,10 +16,10 @@
   (if (and (eudic/is--validate-language language)
            (eudic/is--validate-string name))
       (let* ((body `(("language" . ,language)
-                       ("name" . ,name)))
+                     ("name" . ,name)))
              (response (eudic/do--request :method 'post :url "/v1/studylist/category" :body body))
              (studylist (alist-get 'data response)))
-        (eudic/create--studylist (eudic/alist--take studylist '(id language name))))
+        (add-to-list 'eudic-studylists (eudic/create--studylist (eudic/alist--take studylist '(id language name)))))
     (error "Language must in en/fr/de/es, and the name must be a non-empty string.")))
 
 (defun eudic/create--studylist (alist)
@@ -31,6 +33,6 @@
 (defun eudic/list--studylists ()
   (let* ((response (eudic/do--request :url "/v1/studylist/category" :params '(("language" "en"))))
          (studylists (alist-get 'data response)))
-    (mapcar 'eudic/create--studylist studylists)))
+    (setq eudic-studylists (mapcar 'eudic/create--studylist studylists))))
 
 (provide 'eudic-studylist)
