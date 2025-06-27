@@ -15,16 +15,26 @@
 Retrieve from https://my.eudic.net/OpenAPI/Authorization"
   :group 'eudic)
 
-(cl-defun eudic--do-request (&key (method 'get) url params body)
+(cl-defun eudic--do-request (&key (method 'get) url params body (then '(lambda (x) x)) (async nil))
   (let* (
          (query-string (if params (url-build-query-string params)))
          (complete-url (concat eudic-api-host url (if query-string (concat "?" query-string) "")))
          )
-    (plz method complete-url
-      :body (if body (json-encode body))
-      :headers `(("authorization" . ,eudic-api-key) ("content-type" . "application/json; charset=utf-8"))
-      :body (if body (json-encode body))
-      :as 'response)))
+    (if async
+        (plz method complete-url
+          :headers `(("authorization" . ,eudic-api-key) ("content-type" . "application/json; charset=utf-8"))
+          :body (if body (json-encode body))
+          :as 'response
+          :then then
+          )
+      (funcall then
+       (plz method complete-url
+         :headers `(("authorization" . ,eudic-api-key) ("content-type" . "application/json; charset=utf-8"))
+         :body (if body (json-encode body))
+         :as 'response)))))
+
+(defun eudic--json-response (plz-response)
+  (json-parse-string (plz-response-body response) :object-type 'alist))
 
 (provide 'eudic-client)
 
