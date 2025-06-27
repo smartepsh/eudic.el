@@ -6,15 +6,16 @@
 
 (require 'plz)
 
-(defvar eudic-api-host "https://api.frdic.com/api/open"
-  "Base URL for Eudic API.")
+(defcustom eudic-api-host "https://api.frdic.com/api/open"
+  "Base URL for Eudic API."
+  :group 'eudic)
 
-(defvar eudic-api-key nil
+(defcustom eudic-api-key nil
   "API key for Eudic.
-from htthttps://api.frdic.com/api/open/v1/studylist/categoryps://my.eudic.net/OpenAPI/Authorization")
-(setq eudic-api-key (getenv "EUDIC_API_KEY"))
+Retrieve from https://my.eudic.net/OpenAPI/Authorization"
+  :group 'eudic)
 
-(cl-defun eudic/do--request (&key (method 'get) url params body)
+(cl-defun eudic--do-request (&key (method 'get) url params body)
   (let* (
          (query-string (if params (url-build-query-string params)))
          (complete-url (concat eudic-api-host url (if query-string (concat "?" query-string) "")))
@@ -22,7 +23,8 @@ from htthttps://api.frdic.com/api/open/v1/studylist/categoryps://my.eudic.net/Op
     (plz method complete-url
       :body (if body (json-encode body))
       :headers `(("authorization" . ,eudic-api-key) ("content-type" . "application/json; charset=utf-8"))
-      :as 'json-read)))
+      :body (if body (json-encode body))
+      :as 'response)))
 
 (provide 'eudic-client)
 
