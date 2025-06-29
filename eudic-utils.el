@@ -11,6 +11,10 @@
                            ("Français" . fr))
   "Available languages supproted by Eudic.")
 
+(defun eudic--languages ()
+  "."
+  (mapcar 'cdr eudic--languages))
+
 (defun eudic/is--validate-language (language)
   "Check if LANGUAGE is a valid Eudic language code."
   (member language '("en" "fr" "de" "es")))

@@ -20,14 +20,17 @@
    :name (alist-get 'name alist)
    :add_time (alist-get 'add_time alist)))
 
-(defun eudic-list-studylists (&optional language)
-  "List all studylists under the specific LANGUAGE.
-The default language is retrieve from 'eudic-default-language'.
-You can use \\C-\\u to select LANGUAGE manually."
-  (interactive (list (eudic--read-language)))
-  (eudic--list-studylists language))
+(defun eudic--studylists ()
+  (interactive)
+  (let ((studylists (if eudic-studylists eudic-studylists (refresh-studylists))))
+   (mapcan 'cdr studylists)))
 
-(defun eudic--list-studylists (language)
+(defun eudic-refresh-studylists ()
+  "Refresh all LANGUAGE studylists cache."
+  (interactive)
+  (mapcar 'eudic--refresh-studylists (eudic--languages)))
+
+(defun eudic--refresh-studylists (language)
   (let* (
          (response (eudic--do-request :url "/v1/studylist/category" :params `(("language" ,language)) :then 'eudic--json-response))
          (studylists (mapcar 'eudic--make-studylist (alist-get 'data response)))
