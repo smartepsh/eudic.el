@@ -19,11 +19,7 @@
   "."
   (mapcar 'cdr eudic--languages))
 
-(defun eudic/is--validate-language (language)
-  "Check if LANGUAGE is a valid Eudic language code."
-  (member language '("en" "fr" "de" "es")))
-
-(defun eudic/is--validate-string (string)
+(defun eudic--is-valid-name (string)
   "Check if STRING is a valid non-empty string."
   (and (stringp string) (not (string-empty-p string))))
 
