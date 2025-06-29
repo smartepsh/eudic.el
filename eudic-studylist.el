@@ -70,4 +70,17 @@
          (choice (completing-read "Select studylist: " studylists-alist)))
     (alist-get choice studylists-alist nil nil #'string=)))
 
+(defun eudic-create-studylist (name &optional language)
+  (interactive (list (read-string "New Studylist Name: ") (eudic--read-language)))
+  (eudic--create-studylist :language language :name name))
+
+(cl-defun eudic--create-studylist (&key language name)
+  (if (eudic--is-valid-name name)
+      (let* ((body `(("language" . ,language)
+                     ("name" . ,name)))
+             (response (eudic--do-request :method 'post :url "/v1/studylist/category" :body body :then 'eudic--json-response))
+             (studylist (alist-get 'data response)))
+        (message "%s" studylist))
+    (error "Name must be a non-empty string.")))
+
 (provide 'eudic-studylist)
