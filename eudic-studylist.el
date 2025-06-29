@@ -71,6 +71,7 @@
     (alist-get choice studylists-alist nil nil #'string=)))
 
 (defun eudic-create-studylist (name &optional language)
+  "Create new studylist with NAME and LANGUAGE."
   (interactive (list (read-string "New Studylist Name: ") (eudic--read-language)))
   (eudic--create-studylist :language language :name name))
 
@@ -79,8 +80,19 @@
       (let* ((body `(("language" . ,language)
                      ("name" . ,name)))
              (response (eudic--do-request :method 'post :url "/v1/studylist/category" :body body :then 'eudic--json-response))
-             (studylist (alist-get 'data response)))
-        (message "%s" studylist))
+             (studylist (eudic--make-studylist (alist-get 'data response))))
+        (eudic--add-studylist-to-cache studylist)
+        (message "Success: %s" (eudic--studylist-identity-string studylist))
+        )
     (error "Name must be a non-empty string.")))
 
+(defun eudic--add-studylist-to-cache (studylist)
+  "Add STUDYLIST to 'eudic--studylists'."
+  (let* ((language (eudic-studylist-language studylist))
+         (current-studylists (alist-get language eudic-studylists nil nil 'equal))
+         (new-studylists (push studylist current-studylists)))
+    (setf (alist-get language eudic-studylists nil nil 'equal) new-studylists)))
+
+(eudic--add-studylist-to-cache (eudic--select-studylist-from-mini-buffer))
+(alist-get 'es eudic-studylists nil nil 'equal)
 (provide 'eudic-studylist)
