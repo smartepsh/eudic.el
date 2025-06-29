@@ -7,22 +7,12 @@
 (require 'eudic-client)
 (require 'eudic-utils)
 
-(defvar eudic-studylists
-  "All Eudic studylists.")
+(defvar eudic-studylists nil
+  "Cached all eudic studylists.")
 
 (cl-defstruct eudic-studylist id language name add_time)
 
-(cl-defun eudic/create-studylist (&key language name)
-  (if (and (eudic/is--validate-language language)
-           (eudic/is--validate-string name))
-      (let* ((body `(("language" . ,language)
-                     ("name" . ,name)))
-             (response (eudic/do--request :method 'post :url "/v1/studylist/category" :body body))
-             (studylist (alist-get 'data response)))
-        (add-to-list 'eudic-studylists (eudic/create--studylist (eudic/alist--take studylist '(id language name)))))
-    (error "Language must in en/fr/de/es, and the name must be a non-empty string.")))
-
-(defun eudic/create--studylist (alist)
+(defun eudic--make-studylist (alist)
   "Create a new Eudic study list from ARGS."
   (make-eudic-studylist
    :id (alist-get 'id alist)
@@ -30,9 +20,19 @@
    :name (alist-get 'name alist)
    :add_time (alist-get 'add_time alist)))
 
-(defun eudic/list--studylists ()
-  (let* ((response (eudic/do--request :url "/v1/studylist/category" :params '(("language" "en"))))
-         (studylists (alist-get 'data response)))
-    (setq eudic-studylists (mapcar 'eudic/create--studylist studylists))))
+(defun eudic-list-studylists (&optional language)
+  "List all studylists under the specific LANGUAGE.
+The default language is retrieve from 'eudic-default-language'.
+You can use \\C-\\u to select LANGUAGE manually."
+  (interactive (list (eudic--read-language)))
+  (eudic--list-studylists language))
+
+(defun eudic--list-studylists (language)
+  (let* (
+         (response (eudic--do-request :url "/v1/studylist/category" :params `(("language" ,language)) :then 'eudic--json-response))
+         (studylists (mapcar 'eudic--make-studylist (alist-get 'data response)))
+         )
+    (setf (alist-get language eudic-studylists nil nil 'equal) studylists)
+    (message "%s" studylists)))
 
 (provide 'eudic-studylist)
