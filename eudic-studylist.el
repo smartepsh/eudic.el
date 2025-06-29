@@ -21,9 +21,8 @@
    :add_time (alist-get 'add_time alist)))
 
 (defun eudic--studylists ()
-  (interactive)
-  (let ((studylists (if eudic-studylists eudic-studylists (refresh-studylists))))
-   (mapcan 'cdr studylists)))
+  (let ((studylists (if eudic-studylists eudic-studylists (eudic-refresh-studylists) eudic-studylists)))
+    (mapcan 'cdr studylists)))
 
 (defun eudic-refresh-studylists ()
   "Refresh all LANGUAGE studylists cache."
@@ -37,5 +36,38 @@
          )
     (setf (alist-get language eudic-studylists nil nil 'equal) studylists)
     (message "%s" studylists)))
+
+(defun eudic-delete-studylist ()
+  (interactive)
+  (eudic--delete-studylist (eudic--select-studylist-from-mini-buffer)))
+
+(defun eudic--delete-studylist (studylist)
+  (let* ((status-code (eudic--delete-studylist-with-body `(("id" . ,(eudic-studylist-id studylist))
+                                                           ("language" . ,(eudic-studylist-language studylist))
+                                                           ("name" . ,(eudic-studylist-name studylist))))))
+    (message "%s" status-code)
+    (if (= status-code 204)
+        (message "success")
+      (message "failed")
+      )
+    ))
+
+;; (defun eudic--delete-studylist (studylist)
+;;   (let* ((response (eudic--do-request
+;;                     :method 'delete
+;;                     :url "/v1/studylist/category"
+;;                     :body `(("id" . ,(eudic-studylist-id studylist))
+;;                             ("language" . ,(eudic-studylist-language studylist))
+;;                             ("name" . ,(eudic-studylist-name studylist))))))
+;;     )
+;;   )
+
+(defun eudic--studylist-identity-string (studylist)
+  (concat (eudic--language-display (eudic-studylist-language studylist)) "/" (eudic-studylist-id studylist) "/" (eudic-studylist-name studylist)))
+
+(defun eudic--select-studylist-from-mini-buffer ()
+  (let* ((studylists-alist (mapcar (lambda (studylist) (cons (eudic--studylist-identity-string studylist) studylist)) (eudic--studylists)))
+         (choice (completing-read "Select studylist: " studylists-alist)))
+    (alist-get choice studylists-alist nil nil #'string=)))
 
 (provide 'eudic-studylist)

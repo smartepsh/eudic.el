@@ -11,6 +11,10 @@
                            ("Français" . fr))
   "Available languages supproted by Eudic.")
 
+(defun eudic--language-display (lang)
+  "Return the LANG display string."
+  (car (rassoc (intern lang) eudic--languages)))
+
 (defun eudic--languages ()
   "."
   (mapcar 'cdr eudic--languages))
