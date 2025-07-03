@@ -27,15 +27,15 @@
 (defun eudic-refresh-studylists ()
   "Refresh all LANGUAGE studylists cache."
   (interactive)
-  (mapcar 'eudic--refresh-studylists (eudic--languages)))
+  (mapcar 'eudic--refresh-studylists (eudic--languages))
+  (message "Eudic studylists refreshed."))
 
 (defun eudic--refresh-studylists (language)
   (let* (
          (response (eudic--do-request :url "/v1/studylist/category" :params `(("language" ,language)) :then 'eudic--json-response))
          (studylists (mapcar 'eudic--make-studylist (alist-get 'data response)))
          )
-    (setf (alist-get language eudic-studylists nil nil 'equal) studylists)
-    (message "%s" studylists)))
+    (setf (alist-get language eudic-studylists nil nil 'equal) studylists)))
 
 (defun eudic-delete-studylist ()
   (interactive)
@@ -47,10 +47,11 @@
                                                            ("name" . ,(eudic-studylist-name studylist))))))
     (message "%s" status-code)
     (if (= status-code 204)
-        (message "success")
-      (message "failed")
-      )
-    ))
+        (progn
+
+          (eudic--refresh-studylists language)
+          (message "Remove succuess: %s" (eudic--studylist-identity-string studylist)))
+      (message "Remove failed."))))
 
 ;; (defun eudic--delete-studylist (studylist)
 ;;   (let* ((response (eudic--do-request
@@ -81,18 +82,9 @@
                      ("name" . ,name)))
              (response (eudic--do-request :method 'post :url "/v1/studylist/category" :body body :then 'eudic--json-response))
              (studylist (eudic--make-studylist (alist-get 'data response))))
-        (eudic--add-studylist-to-cache studylist)
+        (eudic--refresh-studylists language)
         (message "Success: %s" (eudic--studylist-identity-string studylist))
         )
     (error "Name must be a non-empty string.")))
 
-(defun eudic--add-studylist-to-cache (studylist)
-  "Add STUDYLIST to 'eudic--studylists'."
-  (let* ((language (eudic-studylist-language studylist))
-         (current-studylists (alist-get language eudic-studylists nil nil 'equal))
-         (new-studylists (push studylist current-studylists)))
-    (setf (alist-get language eudic-studylists nil nil 'equal) new-studylists)))
-
-(eudic--add-studylist-to-cache (eudic--select-studylist-from-mini-buffer))
-(alist-get 'es eudic-studylists nil nil 'equal)
 (provide 'eudic-studylist)
