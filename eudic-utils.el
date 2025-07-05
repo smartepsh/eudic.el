@@ -4,8 +4,7 @@
 
 ;;; Code:
 
-(defvar eudic--languages '(
-                           ("English" . en)
+(defvar eudic--languages '(("English" . en)
                            ("Deutsch" . de)
                            ("Español" . es)
                            ("Français" . fr))
@@ -40,3 +39,4 @@
     eudic-default-language))
 
 (provide 'eudic-utils)
+;; eudic-utils.el ends here

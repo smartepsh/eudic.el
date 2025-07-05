@@ -56,5 +56,4 @@ BODY is the request body built by studylist."
   (json-parse-string (plz-response-body plz-response) :object-type 'alist))
 
 (provide 'eudic-client)
-
 ;;; eudic-client.el ends here
