@@ -49,11 +49,9 @@
   (let* ((status-code (eudic--delete-studylist-with-body `(("id" . ,(eudic-studylist-id studylist))
                                                            ("language" . ,(eudic-studylist-language studylist))
                                                            ("name" . ,(eudic-studylist-name studylist))))))
-    (message "%s" status-code)
     (if (= status-code 204)
         (progn
-
-          (eudic--refresh-studylists language)
+          (eudic--remove-studylist-from-cache studylist)
           (message "Remove succuess: %s" (eudic--studylist-identity-string studylist)))
       (message "Remove failed."))))
 
@@ -98,5 +96,11 @@
          (new-studylists (cons studylist studylists)))
     (setf (alist-get language eudic-studylists nil nil 'equal) new-studylists)))
 
+(defun eudic--remove-studylist-from-cache (studylist)
+  "Remove STUDYLIST from cache."
+  (let* ((language (intern (eudic-studylist-language studylist)))
+         (studylists (alist-get language eudic-studylists nil nil 'equal))
+         (new-studylists (remove studylist studylists)))
+    (setf (alist-get language eudic-studylists nil nil 'equal) new-studylists)))
 
 (provide 'eudic-studylist)
