@@ -21,8 +21,11 @@
    :add_time (alist-get 'add_time alist)))
 
 (defun eudic--studylists ()
-  (let ((studylists (if eudic-studylists eudic-studylists (eudic-refresh-studylists) eudic-studylists)))
-    (mapcan 'cdr studylists)))
+  (let ((studylists (if eudic-studylists
+                        eudic-studylists
+                      (eudic-refresh-studylists)
+                      eudic-studylists)))
+    (apply #'append (mapcar #'cdr studylists))))
 
 (defun eudic-refresh-studylists ()
   "Refresh all LANGUAGE studylists cache."
