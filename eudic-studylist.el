@@ -4,8 +4,9 @@
 
 ;;; Code:
 
-(require 'eudic-client)
-(require 'eudic-utils)
+(eval-and-compile
+  (require 'eudic-client)
+  (require 'eudic-utils))
 
 (defvar eudic-studylists nil
   "Cached all eudic studylists.")
