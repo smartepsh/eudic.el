@@ -30,6 +30,7 @@
 (defun eudic-refresh-studylists ()
   "Refresh all LANGUAGE studylists cache."
   (interactive)
+  (setq eudic-studylists nil)
   (mapcar 'eudic--refresh-studylists (eudic--languages))
   (message "Eudic studylists refreshed."))
 
