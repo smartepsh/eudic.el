@@ -10,6 +10,10 @@
 (defvar eudic-studylists nil
   "Cached all eudic studylists.")
 
+(defcustom eudic-default-studylist nil
+  "Default studylist to use."
+  :group 'eudic)
+
 (cl-defstruct eudic-studylist id language name add_time)
 
 (defun eudic--make-studylist (alist)
@@ -102,5 +106,21 @@
          (studylists (alist-get language eudic-studylists nil nil 'equal))
          (new-studylists (remove studylist studylists)))
     (setf (alist-get language eudic-studylists nil nil 'equal) new-studylists)))
+
+(defun eudic-add-word-to-studylist (&optional word studylist)
+  "Add WORD to STUDYLIST. If STUDYLIST is nil, prompt for one. Use `eudic-default-studylist' if available."
+  (interactive)
+  (let* ((studylist (or studylist (or eudic-default-studylist (eudic--select-studylist-from-mini-buffer))))
+         (word (or word (read-string "New Word: "))))
+    (eudic--add-word-to-studylist word studylist)))
+
+(defun eudic--add-word-to-studylist (word studylist)
+  (let* ((body `(
+                 (id . ,(eudic-studylist-id studylist))
+                 (language . ,(eudic-studylist-language studylist))
+                 (category . ,(eudic-studylist-id studylist))
+                 (words . ,(list word))))
+               (response (eudic--do-request :method 'post :url "/v1/studylist/words" :body body :then 'eudic--json-response)))
+    (message "Add word %s to %s succuess" word (eudic--studylist-identity-string studylist))))
 
 (provide 'eudic-studylist)
