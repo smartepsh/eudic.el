@@ -6,13 +6,14 @@
 
 (eval-and-compile
   (require 'eudic-client)
+  (require 'cl-lib)
   (require 'eudic-utils))
 
 (defvar eudic-studylists nil
   "Cached all eudic studylists.")
 
 (defcustom eudic-default-studylist nil
-  "Default studylist to use."
+  "Default studylist to use. The value should be a studylist id or \"language-default\"."
   :group 'eudic)
 
 (cl-defstruct eudic-studylist id language name add_time)
@@ -111,7 +112,7 @@
 (defun eudic-add-word-to-studylist (&optional word studylist)
   "Add WORD to STUDYLIST. If STUDYLIST is nil, prompt for one. Use `eudic-default-studylist' if available."
   (interactive)
-  (let* ((studylist (or studylist (or eudic-default-studylist (eudic--select-studylist-from-mini-buffer))))
+  (let* ((studylist (or studylist (or (eudic--default-studylist) (eudic--select-studylist-from-mini-buffer))))
          (word (or word (read-string "New Word: "))))
     (eudic--add-word-to-studylist word studylist)))
 
@@ -123,6 +124,24 @@
                  (words . ,(list word))))
          (response (eudic--do-request :method 'post :url "/v1/studylist/words" :body body :then 'eudic--json-response)))
     (message "Add word %s to %s successfully." word (eudic--studylist-identity-string studylist))))
+
+(defun eudic--default-studylist ()
+  "Return the default studylist by 'eudic-default-studylist'."
+  (pcase eudic-default-studylist
+    ("language-default" (eudic--language-default-studylist))
+    ((pred stringp) (eudic--get-studylist eudic-default-studylist))
+    (_ nil)))
+
+(defun eudic--language-default-studylist ()
+  (cl-find-if (lambda (studylist)
+                (and (equal (eudic-studylist-id studylist) "0")
+                     (equal (eudic-studylist-language studylist) eudic-default-language)))
+              (eudic--studylists)))
+
+(defun eudic--get-studylist (id)
+  (cl-find eudic-default-studylist (eudic--studylists)
+           :key 'eudic-studylist-id
+           :test 'equal))
 
 (provide 'eudic-studylist)
 ;; eudic-studylist.el ends here
