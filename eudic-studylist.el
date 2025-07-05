@@ -115,12 +115,13 @@
     (eudic--add-word-to-studylist word studylist)))
 
 (defun eudic--add-word-to-studylist (word studylist)
-  (let* ((body `(
-                 (id . ,(eudic-studylist-id studylist))
+  "Add WORD to STUDYLIST."
+  (let* ((body `((id . ,(eudic-studylist-id studylist))
                  (language . ,(eudic-studylist-language studylist))
                  (category . ,(eudic-studylist-id studylist))
                  (words . ,(list word))))
-               (response (eudic--do-request :method 'post :url "/v1/studylist/words" :body body :then 'eudic--json-response)))
-    (message "Add word %s to %s succuess" word (eudic--studylist-identity-string studylist))))
+         (response (eudic--do-request :method 'post :url "/v1/studylist/words" :body body :then 'eudic--json-response)))
+    (message "Add word %s to %s successfully." word (eudic--studylist-identity-string studylist))))
 
 (provide 'eudic-studylist)
+;; eudic-studylist.el ends here
