@@ -12,7 +12,7 @@
 
 (defun eudic--language-display (lang)
   "Return the LANG display string."
-  (car (rassoc (intern lang) eudic--languages)))
+  (car (rassoc lang eudic--languages)))
 
 (defun eudic--languages ()
   "."

@@ -21,7 +21,7 @@
   "Create a new Eudic study list from ARGS."
   (make-eudic-studylist
    :id (alist-get 'id alist)
-   :language (alist-get 'language alist)
+   :language (intern (alist-get 'language alist))
    :name (alist-get 'name alist)
    :add_time (alist-get 'add_time alist)))
 
@@ -96,14 +96,14 @@
 
 (defun eudic--add-studylist-to-cache (studylist)
   "Add STUDYLIST to cache."
-  (let* ((language (intern (eudic-studylist-language studylist)))
+  (let* ((language (eudic-studylist-language studylist))
          (studylists (alist-get language eudic-studylists nil nil 'equal))
          (new-studylists (cons studylist studylists)))
     (setf (alist-get language eudic-studylists nil nil 'equal) new-studylists)))
 
 (defun eudic--remove-studylist-from-cache (studylist)
   "Remove STUDYLIST from cache."
-  (let* ((language (intern (eudic-studylist-language studylist)))
+  (let* ((language (eudic-studylist-language studylist))
          (studylists (alist-get language eudic-studylists nil nil 'equal))
          (new-studylists (remove studylist studylists)))
     (setf (alist-get language eudic-studylists nil nil 'equal) new-studylists)))
