@@ -85,9 +85,17 @@
                      ("name" . ,name)))
              (response (eudic--do-request :method 'post :url "/v1/studylist/category" :body body :then 'eudic--json-response))
              (studylist (eudic--make-studylist (alist-get 'data response))))
-        (eudic--refresh-studylists language)
+        (eudic--add-studylist-to-cache studylist)
         (message "Success: %s" (eudic--studylist-identity-string studylist))
         )
     (error "Name must be a non-empty string.")))
+
+(defun eudic--add-studylist-to-cache (studylist)
+  "Add STUDYLIST to cache."
+  (let* ((language (intern (eudic-studylist-language studylist)))
+         (studylists (alist-get language eudic-studylists nil nil 'equal))
+         (new-studylists (cons studylist studylists)))
+    (setf (alist-get language eudic-studylists nil nil 'equal) new-studylists)))
+
 
 (provide 'eudic-studylist)
