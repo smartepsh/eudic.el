@@ -4,6 +4,8 @@
 
 ;;; Code:
 
+(require 'eudic)
+
 (defvar eudic--languages '(("English" . en)
                            ("Deutsch" . de)
                            ("Español" . es)
