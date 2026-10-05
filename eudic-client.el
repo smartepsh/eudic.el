@@ -4,18 +4,25 @@
 
 ;;; Code:
 
+(require 'cl-lib)
+(require 'json)
+(require 'url)
+(require 'eudic)
 (require 'plz)
 
 (defcustom eudic-api-host "https://api.frdic.com/api/open"
   "Base URL for Eudic API."
+  :type 'string
   :group 'eudic)
 
 (defcustom eudic-api-key nil
   "API key for Eudic.
 Retrieve from https://my.eudic.net/OpenAPI/Authorization"
+  :type '(choice (const nil) string)
   :group 'eudic)
 
-(cl-defun eudic--do-request (&key (method 'get) url params body (then '(lambda (x) x)) (async nil))
+
+(cl-defun eudic--do-request (&key (method 'get) url params body (then #'identity) (async nil) else)
   (let* (
          (query-string (if params (url-build-query-string params)))
          (complete-url (concat eudic-api-host url (if query-string (concat "?" query-string) "")))
@@ -26,6 +33,7 @@ Retrieve from https://my.eudic.net/OpenAPI/Authorization"
           :body (if body (json-encode body))
           :as 'response
           :then then
+          :else else
           )
       (funcall then
                (plz method complete-url
@@ -56,4 +64,5 @@ BODY is the request body built by studylist."
   (json-parse-string (plz-response-body plz-response) :object-type 'alist))
 
 (provide 'eudic-client)
+
 ;;; eudic-client.el ends here

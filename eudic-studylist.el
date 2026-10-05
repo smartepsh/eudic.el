@@ -18,6 +18,33 @@
 
 (cl-defstruct eudic-studylist id language name add_time)
 
+(defun eudic--auto-add-word-to-studylist (word)
+  "Asynchronously add WORD to `eudic-default-studylist-id'.
+Use `eudic-default-language' and authenticate with `eudic-api-key'."
+  (unless (and (stringp word) (not (string-empty-p (string-trim word))))
+    (user-error "Please provide a non-empty word"))
+  (unless (and (stringp eudic-api-key)
+               (not (string-empty-p (string-trim eudic-api-key))))
+    (user-error "Set eudic-api-key before saving words"))
+  (unless (and (stringp eudic-default-studylist-id)
+               (not (string-empty-p (string-trim eudic-default-studylist-id))))
+    (user-error "Set eudic-default-studylist-id to a studylist ID"))
+  (unless (memq eudic-default-language (eudic--languages))
+    (user-error "Unsupported eudic-default-language: %s" eudic-default-language))
+  (let ((word (string-trim word)))
+    (eudic--do-request
+     :method 'post
+     :url "/v1/studylist/words"
+     :body `(("language" . ,(symbol-name eudic-default-language))
+             ("category_id" . ,eudic-default-studylist-id)
+             ("words" . ,(vector word)))
+     :async t
+     :then (lambda (_response)
+             (message "Eudic: saved %s to studylist" word))
+     :else (lambda (_error)
+             (message "Eudic: could not save %s; check API key, studylist and network"
+                      word)))))
+
 (defun eudic--make-studylist (alist)
   "Create a new Eudic study list from ARGS."
   (make-eudic-studylist
