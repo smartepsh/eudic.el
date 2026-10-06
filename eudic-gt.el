@@ -20,7 +20,8 @@
           :documentation "Non-nil opens the small window; nil opens the main window."))
   "Dispatch one lookup to Eudic without retrieving a translation.
 Use :pick nil on the taker and a single target language.  The target
-language is not passed to Eudic.  Each execution dispatches a new lookup.")
+language is not passed to Eudic.  Each execution dispatches a new lookup.
+When `eudic-activate' is nil, use :popup nil for AppleScript lookup.")
 
 (cl-defmethod gt-execute ((engine eudic-gt-engine) task)
   "Open TASK's text using ENGINE and return an empty result placeholder."

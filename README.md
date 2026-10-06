@@ -25,6 +25,23 @@
 
 默认通过 `browse-url-default-browser` 交给操作系统处理。可设置 `eudic-open-url-function` 为接收一个 URL 参数的函数，定制启动方式。
 
+### 查词时保留 Emacs 焦点（macOS）
+
+```elisp
+(setq eudic-activate nil)  ; Emacs Lisp 的假值是 nil
+```
+
+`eudic-activate` 默认为 `t`，沿用标准 URL 打开方式和 `eudic-open-url-function`。
+设为 `nil` 后，主窗口查词改用异步 AppleScript `show dic with word`，不发送 `activate`，也不调用 URL 打开函数。
+查询文本作为独立进程参数传递，支持引号、换行和中文，不会插入脚本代码。
+
+此模式要求 macOS、`osascript` 和应用标识为 `com.eusoft.eudic` 的欧路词典。首次使用可能需要允许 Emacs 自动化控制欧路；执行失败会显示错误，不会回退到可能抢焦点的 URL 方式。
+已在欧路 25.9.0 **已运行状态**下实测保留 Emacs 焦点；首次启动行为尚未验证。
+
+**LightPeek 暂不支持此模式。** 主应用的脚本没有小窗口参数，本机 LightPeek 对相同查词事件返回“不支持”错误（`-1708`）。
+因此 `eudic-activate` 为 `nil` 时，`eudic-lookup-in-popup` 会报错；gt 请使用 `(eudic-gt-engine :popup nil)`。
+需要 LightPeek 时设回 `(setq eudic-activate t)`，窗口激活行为由欧路决定。
+
 ## 查词后自动加入生词本
 
 自动加词默认关闭。安装 `plz`（`M-x package-install RET plz RET`）及其运行依赖 `curl`，然后配置：
@@ -40,7 +57,9 @@
 
 `"0"` 是内置的“我的生词本”；也可以设为其他生词本的 ID。语言支持 `en`、`de`、`es`、`fr`，此设置控制加词请求的语言。接口依据[欧路生词本 API 文档](https://my.eudic.net/OpenAPI/doc_api_study)第 1.6 节，使用 `POST /v1/studylist/words`。
 
-普通查词和小窗口查词共用此设置。发送查词链接后异步加词，失败会在 Emacs 中显示提示。URL 协议不会返回释义或查词成功状态，因此自动加词不以“欧路是否查到释义”为条件。设置 `eudic-auto-add-to-studylist` 为 `nil` 即可关闭。
+普通查词和小窗口查词共用此设置。发送查词链接后异步加词；不激活模式则在 AppleScript 成功退出后加词，脚本失败不会加词。失败会在 Emacs 中显示提示。自动加词不以“欧路是否查到释义”为条件。设置 `eudic-auto-add-to-studylist` 为 `nil` 即可关闭。
+
+自动加词使用独立的内部函数和 `eudic-default-studylist-id` 设置；原有 `eudic-add-word-to-studylist` 命令及其 `eudic-default-studylist` 设置仍然保留。
 
 ## 接入 gt
 
@@ -71,11 +90,12 @@
 
 模块提供三个接口：
 
-- `eudic-gt-engine`：调用现有查词函数，沿用 `eudic-open-url-function` 和自动加入生词本设置，默认不启用缓存。
+- `eudic-gt-engine`：调用现有查词函数，沿用 `eudic-activate`、`eudic-open-url-function` 和自动加入生词本设置，默认不启用缓存。
 - `eudic-gt-output`：隐藏占位结果，保留调用错误提示。
 - `eudic-gt-render`：返回 `(gt-render :output #'eudic-gt-output)`，无需定义新的 renderer 类。
 
 欧路 URL 协议不返回译文；引擎返回一个空字符串占位，让 gt 正常完成任务。这只表示调用已发出，不表示欧路已经查到释义。
+不激活模式同样在脚本进程启动后返回占位；稍后的脚本错误直接显示在 Emacs 消息区。
 gt 的源语言和目标语言不会传给欧路，也不会覆盖 `eudic-default-language`。
 一次只支持一项文本和一个目标语言，不支持分段批量查询或流式输出；保留 `:pick nil`、`:delimit nil`，关闭多目标语言，以免连续查询覆盖欧路窗口。
 
@@ -88,6 +108,17 @@ gt 的源语言和目标语言不会传给欧路，也不会覆盖 `eudic-defaul
 - `M-x eudic-refresh-studylists`：刷新所有支持语言的生词本缓存。
 - `M-x eudic-create-studylist`：创建生词本；使用 `C-u` 前缀可选择语言。
 - `M-x eudic-delete-studylist`：选择并删除生词本。
+- `M-x eudic-add-word-to-studylist`：选择生词本并输入单词，或使用 `eudic-default-studylist` 指定的生词本。该设置支持生词本 ID 和 `"language-default"`（当前语言的默认生词本）。
+
+原有 Lisp 调用 `(eudic-add-word-to-studylist word studylist)` 仍受支持，第二个参数是 `eudic-studylist` 对象，也可以省略。
+只想在 gt 取词后加词时，仍可使用原有回调方式：
+
+```elisp
+(defun my-add-word-to-eudic (translator)
+  (eudic-add-word-to-studylist (car (oref translator text))))
+
+;; 在现有 gt-taker 配置中加入 :then #'my-add-word-to-eudic
+```
 
 ## 测试
 
@@ -97,7 +128,7 @@ gt 的源语言和目标语言不会传给欧路，也不会覆盖 `eudic-defaul
 emacs -Q --batch -L . -L /path/to/plz -l tests/eudic-test.el -f ert-run-tests-batch-and-exit
 ```
 
-测试替换系统 URL 启动和 HTTP 传输，不会打开欧路或修改真实生词本。
+测试替换系统 URL 启动、AppleScript 进程和 HTTP 传输，不会打开欧路或修改真实生词本。
 
 gt 集成测试使用真实的 gt 和 pdd，仅替换欧路启动函数：
 
