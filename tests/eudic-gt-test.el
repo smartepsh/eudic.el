@@ -92,10 +92,27 @@
         (eudic-auto-add-to-studylist t)
         events)
     (let ((eudic-open-url-function (lambda (_) (push 'open events))))
-      (cl-letf (((symbol-function 'eudic-add-word-to-studylist)
+      (cl-letf (((symbol-function 'eudic--auto-add-word-to-studylist)
                  (lambda (word) (push word events))))
         (eudic-gt-test--run (eudic-gt-test--translator '(" hello ")))))
     (should (equal (nreverse events) '(open "hello")))))
+
+(ert-deftest eudic-gt-honors-background-mode-and-rejects-lightpeek ()
+  (let ((gt-polyglot-p nil)
+        (eudic-activate nil)
+        (eudic-auto-add-to-studylist nil)
+        (eudic-open-url-function (lambda (_) (ert-fail "Unexpected URL lookup")))
+        lookups)
+    (cl-letf (((symbol-function 'eudic--lookup-in-background)
+               (lambda (word _on-success) (push word lookups) 'test-process)))
+      (let ((task (car (eudic-gt-test--run
+                       (eudic-gt-test--translator '("hello") t)))))
+        (should-not (oref task err))
+        (should (equal (oref task res) '(""))))
+      (let ((task (car (eudic-gt-test--run
+                       (eudic-gt-test--translator '("hello"))))))
+        (should (string-match-p "LightPeek" (oref task err))))
+      (should (equal lookups '("hello"))))))
 
 (provide 'eudic-gt-test)
 ;;; eudic-gt-test.el ends here
